@@ -1,2 +1,2 @@
 all:
-	gcc -std=c99 -Wall -Werror main.c -o craytracer -lm
+	gcc -std=c99 -g -Wall -Werror main.c -o craytracer -lm

@@ -13,6 +13,7 @@ typedef struct ObjectHit {
 
 typedef struct Sphere {
     Vector position;
+    Vector color;
     float radius;
 } Sphere;
 
@@ -23,21 +24,60 @@ unsigned char image_data[IMAGE_WIDTH * IMAGE_HEIGHT * 3];
 
 float picture[IMAGE_WIDTH][IMAGE_HEIGHT][3];
 
-const int numRays = 10; // Rays per iteration
+const int numRays = 5; // Rays per iteration
 
-Sphere all_spheres[] = {{.position.x=-1.5, .position.z=-4, .radius=1}, {.position.x=1.5,.position.z=-4, .radius=1}};
+#define NUM_SPHERES 500
+Sphere all_spheres[NUM_SPHERES];
+/*Sphere all_spheres[] = {
+    {.color.x=1.0, .color.y=0, .color.z=0.5, .position.x=1.5,.position.z=-4, .radius=1},
+    {.color.x=0.2, .color.y=0.7, .color.z=0.9,.position.x=-1.5, .position.z=-4, .radius=1},
+};
+*/
 
 float makeRandom(void) { return (float)rand() / (float)RAND_MAX; }
+float make_random(void) { return (float)rand() / (float)RAND_MAX; }
 
 float clamp(float x, float min, float max) { 
+  return (x < min ? min : (x > max ? max : x));
+}
+
+float clampint(int x, int min, int max) { 
   return (x < min ? min : (x > max ? max : x));
 }
 
 Vector shoot_ray(Sphere *spheres, int num_spheres, Vector start, Vector direction);
 ObjectHit ray_sphere_intersection(Sphere *spheres, int num_spheres, Vector start, Vector direction);
 
+void print_vector(Vector v) {
+    printf("x: %f y: %f z: %f\n", v.x, v.y, v.z);
+}
+
 int main(void) {
     srand(0);
+    Vector white = (Vector){1.0,1.0,1.0};
+    Vector color_1 = (Vector){0.6,0.1,0.4};
+    Vector color_2 = (Vector){0.3,0.1,0.8};
+    color_1 = vector_dividef(vector_plus(color_1, white), 2);
+    color_2 = vector_dividef(vector_plus(color_2, white), 2);
+
+    all_spheres[0] = (Sphere){.position = {.z=-60}, .color = color_1, .radius=1.0};
+    all_spheres[1] = (Sphere){.position = {.x=-7, .y=-5, .z=-65}, .color = color_1, .radius=1.0};
+    all_spheres[2] = (Sphere){.position = {.x=7, .y=7, .z=-50}, .color = color_1, .radius=1.0};
+    //all_spheres[0] = (Sphere){.position = {.z=-60}, .color = color_1, .radius=1.0};
+    //all_spheres[0] = (Sphere){.position = {.z=-60}, .color = color_1, .radius=1.0};
+
+
+
+    for(int i = 3; i < NUM_SPHERES; i++) {
+        int sphere_to_grow_from_index = floor(make_random()*i);
+
+        Vector direction = (Vector){2*make_random()-1, 2*make_random()-1, 2*make_random()-1};
+        direction = vector_normalize(direction);
+        Vector new_position = vector_plus(all_spheres[sphere_to_grow_from_index].position, vector_multiplyf(direction,3.0));
+        Vector the_color = make_random() > 0.6 ? color_1 : color_2;
+        all_spheres[i] = (Sphere){.position = new_position, .radius = 2.0, .color = the_color};
+    }
+    
     Vector s = {0,0,0};
     float xmax = 5, ymax = 5;
     int num_passes = 0;
@@ -56,7 +96,7 @@ int main(void) {
                 for(int i = 0; i < numRays; i++) {
                     // bounces = 0
                     
-                    end_color = vector_plus(end_color, shoot_ray(all_spheres, 2, s, dir));
+                    end_color = vector_plus(end_color, shoot_ray(all_spheres, NUM_SPHERES, s, dir));
                     //printf("%f %f %f\n", end_color.x, end_color.y, end_color.z);
                 }
                 end_color = vector_dividef(end_color, (float)numRays);
@@ -65,6 +105,10 @@ int main(void) {
                 picture[screenX][screenY][0] += end_color.x;
                 picture[screenX][screenY][1] += end_color.y;
                 picture[screenX][screenY][2] += end_color.z;
+            }
+
+            if(screenY %40 == 0) {
+                printf("%d/%d\n", screenY, IMAGE_HEIGHT);
             }
 
         }
@@ -94,6 +138,7 @@ int main(void) {
 
 Vector shoot_ray(Sphere *spheres, int num_spheres, Vector start, Vector direction) {
   int max_bounces = 50; 
+  Vector env = {1, 1, 1}; 
   Vector resulting_color = {};
   Vector throughput = {1.0, 1.0, 1.0};
 
@@ -101,7 +146,9 @@ Vector shoot_ray(Sphere *spheres, int num_spheres, Vector start, Vector directio
     ObjectHit hit = ray_sphere_intersection(all_spheres, num_spheres, start, direction);
 
     if (hit.index == -1) {
-      break;
+        resulting_color = vector_plus(resulting_color, vector_multiply(throughput, env));
+
+        break;
     }
 
     Sphere hit_sphere = all_spheres[hit.index];
@@ -135,13 +182,18 @@ Vector shoot_ray(Sphere *spheres, int num_spheres, Vector start, Vector directio
     direction = vector_normalize(direction);
     start = vector_plus(hit.position, vector_multiplyf(hit_normal, 0.001f));
 
-    Vector this_color = {0.3,0.8,0.1};//Vector(all_colors[hit.index].r, all_colors[hit.index].g, all_colors[hit.index].b);
+    Vector this_color = spheres[hit.index].color;
 
-    Vector emittance = hit.index == 1 ? (Vector){10.0,10.0,10.0} : (Vector){0,0,0};
-    //resulting_color = vector_plus(emittance, vector_multiply(resulting_color, this_color)); 
-    //resulting_color = vector_multiply(resulting_color, this_color); 
+    Vector emittance = {};//hit.index == 1 ? (Vector){10.0,10.0,10.0} : (Vector){0,0,0};
     resulting_color = vector_plus(resulting_color, vector_multiply(throughput, emittance));
     throughput = vector_multiply(throughput, this_color);
+    if (num_bounces > 2) {  // Let first few bounces always continue
+       float p = fmaxf(throughput.x, fmaxf(throughput.y, throughput.z));
+       if (makeRandom() > p) {
+           break;  
+       }
+       throughput = vector_dividef(throughput, p);  
+    }
   }
   
   return resulting_color;
