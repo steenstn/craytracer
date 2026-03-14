@@ -21,7 +21,7 @@ static inline Vector vector_cross(Vector a, Vector b) {
 }
 
 static inline Vector vector_normalize(Vector v) {
-    float abs = sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
+    float abs = sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
     Vector normalized = {
         .x = v.x / abs,
         .y = v.y / abs,
@@ -76,7 +76,7 @@ static inline Vector vector_dividef(Vector v, float f) {
 }
 
 static inline float vector_length(Vector v) {
-    return sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
+    return sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
 }
 
 

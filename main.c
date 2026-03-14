@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <omp.h>
-#include <stdint.h>
 
 #include "image.c"
 #include "vector.c"
@@ -35,25 +34,8 @@ Vector all_colors[NUM_SPHERES];
     {.color.x=0.2, .color.y=0.7, .color.z=0.9,.position.x=-1.5, .position.z=-4, .radius=1},
 };
 */
-typedef struct {
-    uint64_t s[2];
-} xorshift128p_state;
-static __thread xorshift128p_state rng_state;
-void xorshift128p_init(uint64_t seed) {
-    rng_state.s[0] = seed;
-    rng_state.s[1] = seed ^ 0x123456789ABCDEF0ULL;
-}
-static inline uint64_t xorshift128p(void) {
-    uint64_t s1 = rng_state.s[0];
-    const uint64_t s0 = rng_state.s[1];
-    rng_state.s[0] = s0;
-    s1 ^= s1 << 23;
-    rng_state.s[1] = s1 ^ s0 ^ (s1 >> 18) ^ (s0 >> 5);
-    return rng_state.s[1] + s0;
-}
-static inline float make_random(void) {
-    return (float)(xorshift128p() >> 11) * (1.0f / 9007199254740992.0f);
-}
+
+float make_random(void) { return (float)rand() / (float)RAND_MAX; }
 
 float clamp(float x, float min, float max) { 
   return (x < min ? min : (x > max ? max : x));
@@ -71,7 +53,7 @@ void print_vector(Vector v) {
 }
 
 int main(void) {
-    srand(0);
+    srand(omp_get_wtime());
     Vector white = (Vector){1.0,1.0,1.0};
     Vector color_1 = (Vector){0.6,0.1,0.4};
     Vector color_2 = (Vector){0.3,0.1,0.8};
@@ -114,7 +96,7 @@ int main(void) {
                 Vector end_color = {};
                 float x, y;
                 x = (float)(screenX * 6) / (float)IMAGE_WIDTH - 3.0;
-                y = (float)(screenY * 6) * (float)IMAGE_HEIGHT / (float)IMAGE_WIDTH / (float)IMAGE_HEIGHT - 3.0 * (float)IMAGE_HEIGHT / (float)IMAGE_WIDTH;
+                y = ((float)(screenY * 6) / (float)IMAGE_HEIGHT - 3.0) * ((float)IMAGE_HEIGHT / (float)IMAGE_WIDTH);
 
                 Vector dir =  {.x = x / xmax, .y = y / ymax, .z = -1};
                 dir = vector_normalize(dir);
@@ -160,7 +142,7 @@ int main(void) {
         }
     
         printf("Saving image...\n");
-        save_image(image_data, "result.ppm",800,600);
+        save_image(image_data, "result.ppm", IMAGE_WIDTH, IMAGE_HEIGHT);
     }
 
 }
@@ -247,7 +229,7 @@ ObjectHit ray_sphere_intersection(Sphere *spheres, int num_spheres, Vector start
         }
 
         float dot_product = v_dot_direction * -1;
-        float wee_sqrt = sqrt(wee);
+        float wee_sqrt = sqrtf(wee);
         float intersection1 = dot_product + wee_sqrt;
         float intersection2 = dot_product - wee_sqrt;
 
