@@ -222,7 +222,7 @@ ObjectHit ray_sphere_intersection(Sphere *spheres, int num_spheres, Vector start
         float v_dot_direction = vector_dot(v, direction);
 
         float wee = v_dot_direction * v_dot_direction -
-            (v.x*v.x + v.y*v.y + v.z*v.z - radius*radius);
+            (vector_dot(v,v)- radius*radius);
 
         if(wee <= 0.0) {
             continue;
