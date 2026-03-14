@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <omp.h>
+#include <stdint.h>
 
 #include "image.c"
 #include "vector.c"
@@ -13,7 +15,6 @@ typedef struct ObjectHit {
 
 typedef struct Sphere {
     Vector position;
-    Vector color;
     float radius;
 } Sphere;
 
@@ -26,16 +27,33 @@ float picture[IMAGE_WIDTH][IMAGE_HEIGHT][3];
 
 const int numRays = 5; // Rays per iteration
 
-#define NUM_SPHERES 500
+#define NUM_SPHERES 1000
 Sphere all_spheres[NUM_SPHERES];
+Vector all_colors[NUM_SPHERES];
 /*Sphere all_spheres[] = {
     {.color.x=1.0, .color.y=0, .color.z=0.5, .position.x=1.5,.position.z=-4, .radius=1},
     {.color.x=0.2, .color.y=0.7, .color.z=0.9,.position.x=-1.5, .position.z=-4, .radius=1},
 };
 */
-
-float makeRandom(void) { return (float)rand() / (float)RAND_MAX; }
-float make_random(void) { return (float)rand() / (float)RAND_MAX; }
+typedef struct {
+    uint64_t s[2];
+} xorshift128p_state;
+static __thread xorshift128p_state rng_state;
+void xorshift128p_init(uint64_t seed) {
+    rng_state.s[0] = seed;
+    rng_state.s[1] = seed ^ 0x123456789ABCDEF0ULL;
+}
+static inline uint64_t xorshift128p(void) {
+    uint64_t s1 = rng_state.s[0];
+    const uint64_t s0 = rng_state.s[1];
+    rng_state.s[0] = s0;
+    s1 ^= s1 << 23;
+    rng_state.s[1] = s1 ^ s0 ^ (s1 >> 18) ^ (s0 >> 5);
+    return rng_state.s[1] + s0;
+}
+static inline float make_random(void) {
+    return (float)(xorshift128p() >> 11) * (1.0f / 9007199254740992.0f);
+}
 
 float clamp(float x, float min, float max) { 
   return (x < min ? min : (x > max ? max : x));
@@ -60,9 +78,12 @@ int main(void) {
     color_1 = vector_dividef(vector_plus(color_1, white), 2);
     color_2 = vector_dividef(vector_plus(color_2, white), 2);
 
-    all_spheres[0] = (Sphere){.position = {.z=-60}, .color = color_1, .radius=1.0};
-    all_spheres[1] = (Sphere){.position = {.x=-7, .y=-5, .z=-65}, .color = color_1, .radius=1.0};
-    all_spheres[2] = (Sphere){.position = {.x=7, .y=7, .z=-50}, .color = color_1, .radius=1.0};
+    all_spheres[0] = (Sphere){.position = {.z=-60}, .radius=1.0};
+    all_colors[0] = color_1;
+    all_colors[1] = color_1;
+    all_colors[2] = color_1;
+    all_spheres[1] = (Sphere){.position = {.x=-7, .y=-5, .z=-65}, .radius=1.0};
+    all_spheres[2] = (Sphere){.position = {.x=7, .y=7, .z=-50}, .radius=1.0};
     //all_spheres[0] = (Sphere){.position = {.z=-60}, .color = color_1, .radius=1.0};
     //all_spheres[0] = (Sphere){.position = {.z=-60}, .color = color_1, .radius=1.0};
 
@@ -75,7 +96,8 @@ int main(void) {
         direction = vector_normalize(direction);
         Vector new_position = vector_plus(all_spheres[sphere_to_grow_from_index].position, vector_multiplyf(direction,3.0));
         Vector the_color = make_random() > 0.6 ? color_1 : color_2;
-        all_spheres[i] = (Sphere){.position = new_position, .radius = 2.0, .color = the_color};
+        all_spheres[i] = (Sphere){.position = new_position, .radius = 2.0};
+        all_colors[i] = the_color;
     }
     
     Vector s = {0,0,0};
@@ -83,6 +105,10 @@ int main(void) {
     int num_passes = 0;
     while(true) {
 
+        double start = omp_get_wtime();
+
+        printf("New pass\n");
+        #pragma omp parallel for collapse(2) schedule(dynamic, 16)
         for(int screenY = 0; screenY < IMAGE_HEIGHT; screenY++) {
             for(int screenX = 0; screenX < IMAGE_WIDTH; screenX++) {
                 Vector end_color = {};
@@ -107,12 +133,15 @@ int main(void) {
                 picture[screenX][screenY][2] += end_color.z;
             }
 
-            if(screenY %40 == 0) {
-                printf("%d/%d\n", screenY, IMAGE_HEIGHT);
-            }
+            //if(screenY %40 == 0) {
+                //printf("%d/%d\n", screenY, IMAGE_HEIGHT);
+            //}
 
         }
-
+        double end = omp_get_wtime();
+        double time_taken = end-start;
+        printf("Time: %f\n", time_taken);
+        // 33s
         num_passes++;
         int image_index = 0;
         for(int screenY = 0; screenY < IMAGE_HEIGHT; screenY++) {
@@ -137,7 +166,7 @@ int main(void) {
 }
 
 Vector shoot_ray(Sphere *spheres, int num_spheres, Vector start, Vector direction) {
-  int max_bounces = 50; 
+  int max_bounces = 10; 
   Vector env = {1, 1, 1}; 
   Vector resulting_color = {};
   Vector throughput = {1.0, 1.0, 1.0};
@@ -164,8 +193,8 @@ Vector shoot_ray(Sphere *spheres, int num_spheres, Vector start, Vector directio
 
     Vector bitangent = vector_normalize(vector_cross(hit_normal, tangent));
     tangent = vector_normalize(vector_cross(bitangent, hit_normal));
-    float eps1 = makeRandom() * 6.28318; // 2*PI
-    float eps2 = sqrtf(makeRandom());
+    float eps1 = make_random() * 6.28318; // 2*PI
+    float eps2 = sqrtf(make_random());
 
     float x = cosf(eps1) * eps2;
     float y = sinf(eps1) * eps2;
@@ -182,14 +211,14 @@ Vector shoot_ray(Sphere *spheres, int num_spheres, Vector start, Vector directio
     direction = vector_normalize(direction);
     start = vector_plus(hit.position, vector_multiplyf(hit_normal, 0.001f));
 
-    Vector this_color = spheres[hit.index].color;
+    Vector this_color = all_colors[hit.index];
 
     Vector emittance = {};//hit.index == 1 ? (Vector){10.0,10.0,10.0} : (Vector){0,0,0};
     resulting_color = vector_plus(resulting_color, vector_multiply(throughput, emittance));
     throughput = vector_multiply(throughput, this_color);
     if (num_bounces > 2) {  // Let first few bounces always continue
        float p = fmaxf(throughput.x, fmaxf(throughput.y, throughput.z));
-       if (makeRandom() > p) {
+       if (make_random() > p) {
            break;  
        }
        throughput = vector_dividef(throughput, p);  
