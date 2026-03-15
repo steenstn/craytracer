@@ -1,4 +1,5 @@
 .vscode/
 *.ppm
 a.out
+.clangd
 craytracer
