@@ -59,18 +59,18 @@ int main(void) {
     color_1 = vector_dividef(vector_plus(color_1, white), 2);
     color_2 = vector_dividef(vector_plus(color_2, white), 2);
 
-    all_spheres[0] = (Sphere){.position = {.y=-2, .z=-60}, .radius=1.0};
+    all_spheres[0] = (Sphere){.position = {.y=-1, .z=-60}, .radius=1.0};
     all_colors[0] = color_1;
     all_colors[1] = color_1;
     all_colors[2] = color_1;
-    all_spheres[1] = (Sphere){.position = {.x=-7, .y=-5, .z=-65}, .radius=1.0};
-    all_spheres[2] = (Sphere){.position = {.x=7, .y=-7, .z=-50}, .radius=1.0};
+    all_spheres[1] = (Sphere){.position = {.x=6*make_random()-3, .y=-1, .z=-65}, .radius=1.0};
+    all_spheres[2] = (Sphere){.position = {.x=7, .y=-1, .z=-50}, .radius=1.0};
 
 
     for(int i = 3; i < NUM_SPHERES-1; i++) {
         int sphere_to_grow_from_index = floor(make_random()*i);
 
-        Vector direction = (Vector){2*make_random()-1, 2*make_random()-1, 2*make_random()-1};
+        Vector direction = (Vector){2*make_random()-1, make_random()*-1, 2*make_random()-1};
         direction = vector_normalize(direction);
         Vector new_position = vector_plus(all_spheres[sphere_to_grow_from_index].position, vector_multiplyf(direction,6.0));
         Vector the_color = make_random() > 0.6 ? color_1 : color_2;
