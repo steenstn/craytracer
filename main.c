@@ -1,4 +1,5 @@
 #include <SDL2/SDL_events.h>
+#include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_pixels.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_video.h>
@@ -107,11 +108,29 @@ int main(void) {
         while(SDL_PollEvent(&e)) {
             if(e.type == SDL_QUIT) {
                 quit = true;
-            }
+            } else if (e.type == SDL_KEYDOWN) {
+                switch (e.key.keysym.sym) {
+                    case SDLK_UP:
+                        s = vector_plus(s, (Vector){.z=-0.5});
+                        break;
+                    case SDLK_DOWN:
+                        s = vector_plus(s, (Vector){.z=0.5});
+                        break;
+                    case SDLK_LEFT:
+                        s = vector_plus(s, (Vector){.x=-0.5});
+                        break;
+                    case SDLK_RIGHT:
+                        s = vector_plus(s, (Vector){.x=0.5});
+                        break;
+                }
+                    
+                num_passes=0;
+                memset(picture, 0, sizeof(picture));
+                }
+            
         }
         //double start = omp_get_wtime();
 
-        //s = vector_plus(s, (Vector){.z=-0.5});
         //printf("New pass\n");
         #pragma omp parallel for collapse(2) schedule(dynamic, 16)
         for(int screenY = 0; screenY < IMAGE_HEIGHT; screenY++) {
