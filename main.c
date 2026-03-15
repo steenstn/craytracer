@@ -89,18 +89,25 @@ int main(void) {
                 quit = true;
             } else if (e.type == SDL_KEYDOWN) {
                 switch (e.key.keysym.sym) {
-                    case SDLK_UP:
+                    case SDLK_w:
                         s = vector_plus(s, (Vector){.z=-0.5});
                         break;
-                    case SDLK_DOWN:
+                    case SDLK_s:
                         s = vector_plus(s, (Vector){.z=0.5});
                         break;
-                    case SDLK_LEFT:
+                    case SDLK_a:
                         s = vector_plus(s, (Vector){.x=-0.5});
                         break;
-                    case SDLK_RIGHT:
+                    case SDLK_d:
                         s = vector_plus(s, (Vector){.x=0.5});
                         break;
+                    case SDLK_UP:
+                        s = vector_plus(s, (Vector){.y=-0.5});
+                        break;
+                    case SDLK_DOWN:
+                        s = vector_plus(s, (Vector){.y=0.5});
+                        break;
+
                 }
                     
                 num_passes=0;
