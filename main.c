@@ -59,15 +59,15 @@ int main(void) {
     color_1 = vector_dividef(vector_plus(color_1, white), 2);
     color_2 = vector_dividef(vector_plus(color_2, white), 2);
 
-    all_spheres[0] = (Sphere){.position = {.z=-60}, .radius=1.0};
+    all_spheres[0] = (Sphere){.position = {.y=-2, .z=-60}, .radius=1.0};
     all_colors[0] = color_1;
     all_colors[1] = color_1;
     all_colors[2] = color_1;
     all_spheres[1] = (Sphere){.position = {.x=-7, .y=-5, .z=-65}, .radius=1.0};
-    all_spheres[2] = (Sphere){.position = {.x=7, .y=7, .z=-50}, .radius=1.0};
+    all_spheres[2] = (Sphere){.position = {.x=7, .y=-7, .z=-50}, .radius=1.0};
 
 
-    for(int i = 3; i < NUM_SPHERES; i++) {
+    for(int i = 3; i < NUM_SPHERES-1; i++) {
         int sphere_to_grow_from_index = floor(make_random()*i);
 
         Vector direction = (Vector){2*make_random()-1, 2*make_random()-1, 2*make_random()-1};
@@ -77,12 +77,14 @@ int main(void) {
         all_spheres[i] = (Sphere){.position = new_position, .radius = 2.0};
         all_colors[i] = the_color;
     }
+
+    all_colors[NUM_SPHERES-1] = (Vector){.x = 0.79, .y = 0.79, .z = 0.79};
+    all_spheres[NUM_SPHERES-1] = (Sphere){.position = {.y=10000, .z=-60}, .radius=10000};
     
-    Vector s = {0,0,0};
+    Vector s = {0,-1,0};
     float xmax = 5, ymax = 5;
     int num_passes = 0;
     while(quit == false) {
-
 
         while(SDL_PollEvent(&e)) {
             if(e.type == SDL_QUIT) {

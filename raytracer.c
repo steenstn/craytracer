@@ -18,39 +18,39 @@ ObjectHit ray_sphere_intersection(Sphere *spheres, int num_spheres, Vector start
     int hit_index = -1;
 
     for(int i=0; i < num_spheres;i++) {
-        Vector c = spheres[i].position;
-        float radius = spheres[i].radius;
-        Vector v = vector_minus(start, c);
-        float v_dot_direction = vector_dot(v, direction);
+            Vector c = spheres[i].position;
+            float radius = spheres[i].radius;
+            Vector v = vector_minus(start, c);
+            float v_dot_direction = vector_dot(v, direction);
 
-        float wee = v_dot_direction * v_dot_direction -
-            (vector_dot(v,v)- radius*radius);
+            float wee = v_dot_direction * v_dot_direction -
+                (vector_dot(v,v)- radius*radius);
 
-        if(wee <= 0.0) {
-            continue;
-        }
+            if(wee <= 0.0) {
+                continue;
+            }
 
-        float dot_product = v_dot_direction * -1;
-        float wee_sqrt = sqrtf(wee);
-        float intersection1 = dot_product + wee_sqrt;
-        float intersection2 = dot_product - wee_sqrt;
+            float dot_product = v_dot_direction * -1;
+            float wee_sqrt = sqrtf(wee);
+            float intersection1 = dot_product + wee_sqrt;
+            float intersection2 = dot_product - wee_sqrt;
 
-        Vector end_position;
-        if (intersection1 < intersection2 && intersection1 > 0.00001) {
-            end_position = vector_multiplyf(direction, intersection1);
-            hit = true;
-        } else if (intersection2 < intersection1 && intersection2 > 0.00001) {
-            end_position = vector_multiplyf(direction, intersection2);
-            hit = true;
-        } else {
-            continue;
-        }
+            Vector end_position;
+            if (intersection1 < intersection2 && intersection1 > 0.00001) {
+                end_position = vector_multiplyf(direction, intersection1);
+                hit = true;
+            } else if (intersection2 < intersection1 && intersection2 > 0.00001) {
+                end_position = vector_multiplyf(direction, intersection2);
+                hit = true;
+            } else {
+                continue;
+            }
 
-        float length = vector_length(end_position);
-        if(hit==true && length < shortest_distance) {
-            hit_index = i;
-            shortest_distance = length;
-        }
+            float length = vector_length(end_position);
+            if(hit==true && length < shortest_distance) {
+                hit_index = i;
+                shortest_distance = length;
+            }
     }
 
     if(hit) {
@@ -62,7 +62,6 @@ ObjectHit ray_sphere_intersection(Sphere *spheres, int num_spheres, Vector start
     }
 }
 
-
 Vector shoot_ray(Sphere *spheres, Vector* colors, int num_spheres, Vector start, Vector direction) {
   int max_bounces = 4; 
   Vector env = {1, 1, 1}; 
@@ -70,11 +69,10 @@ Vector shoot_ray(Sphere *spheres, Vector* colors, int num_spheres, Vector start,
   Vector throughput = {1.0, 1.0, 1.0};
 
   for(int num_bounces = 0; num_bounces < max_bounces; num_bounces++) {
-    ObjectHit hit = ray_sphere_intersection(spheres, num_spheres, start, direction);
+        ObjectHit hit = ray_sphere_intersection(spheres, num_spheres, start, direction);
 
     if (hit.index == -1) {
         resulting_color = vector_plus(resulting_color, vector_multiply(throughput, env));
-
         break;
     }
 
