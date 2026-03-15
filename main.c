@@ -93,7 +93,7 @@ int main(void) {
 
         Vector direction = (Vector){2*make_random()-1, 2*make_random()-1, 2*make_random()-1};
         direction = vector_normalize(direction);
-        Vector new_position = vector_plus(all_spheres[sphere_to_grow_from_index].position, vector_multiplyf(direction,3.0));
+        Vector new_position = vector_plus(all_spheres[sphere_to_grow_from_index].position, vector_multiplyf(direction,6.0));
         Vector the_color = make_random() > 0.6 ? color_1 : color_2;
         all_spheres[i] = (Sphere){.position = new_position, .radius = 2.0};
         all_colors[i] = the_color;
@@ -166,13 +166,13 @@ int main(void) {
         num_passes++;
         #pragma omp parallel for
         for(int i = 0; i < IMAGE_WIDTH*IMAGE_HEIGHT*3; i+=3) {
-
                 float r = picture[i];
                 float g = picture[i+1];
                 float b = picture[i+2];
-                short end_r = clamp(r* 255/num_passes, 0, 255);
-                short end_g = clamp(g* 255/num_passes, 0, 255);
-                short end_b = clamp(b* 255/num_passes, 0, 255);
+                float inv_passes = 255.0f/num_passes;
+                short end_r = clamp(r* inv_passes, 0, 255);
+                short end_g = clamp(g* inv_passes, 0, 255);
+                short end_b = clamp(b* inv_passes, 0, 255);
                 image_data[i] = (unsigned char)end_r;
                 image_data[i+1] = (unsigned char)end_g;
                 image_data[i+2] = (unsigned char)end_b;
