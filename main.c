@@ -1,7 +1,12 @@
+#include <SDL2/SDL_events.h>
+#include <SDL2/SDL_pixels.h>
+#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_video.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <SDL2/SDL.h>
 #include <omp.h>
 
 #include "image.c"
@@ -17,23 +22,19 @@ typedef struct Sphere {
     float radius;
 } Sphere;
 
-#define IMAGE_WIDTH 800
-#define IMAGE_HEIGHT 600
+#define IMAGE_WIDTH 1600
+#define IMAGE_HEIGHT 1200
+#define PIXEL_INDEX(x, y) ((x + y * IMAGE_WIDTH) * 3)
 // For the file
 unsigned char image_data[IMAGE_WIDTH * IMAGE_HEIGHT * 3];
 
-float picture[IMAGE_WIDTH][IMAGE_HEIGHT][3];
+float picture[IMAGE_WIDTH*IMAGE_HEIGHT*3];
 
-const int numRays = 5; // Rays per iteration
+const int numRays = 1; // Rays per iteration
 
-#define NUM_SPHERES 1000
+#define NUM_SPHERES 100
 Sphere all_spheres[NUM_SPHERES];
 Vector all_colors[NUM_SPHERES];
-/*Sphere all_spheres[] = {
-    {.color.x=1.0, .color.y=0, .color.z=0.5, .position.x=1.5,.position.z=-4, .radius=1},
-    {.color.x=0.2, .color.y=0.7, .color.z=0.9,.position.x=-1.5, .position.z=-4, .radius=1},
-};
-*/
 
 float make_random(void) { return (float)rand() / (float)RAND_MAX; }
 
@@ -53,6 +54,24 @@ void print_vector(Vector v) {
 }
 
 int main(void) {
+
+    if(SDL_Init(SDL_INIT_VIDEO) < 0) {
+        printf("SDL could not initialize: %s\n", SDL_GetError());
+        return 1;
+    };
+    SDL_Window* window = SDL_CreateWindow("C Raytracer", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, IMAGE_WIDTH, IMAGE_HEIGHT, SDL_WINDOW_SHOWN);
+
+    if (window == NULL) {
+        printf("Window could not be created: %s\n", SDL_GetError());
+        return 1;
+    }
+
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    SDL_Texture* texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, IMAGE_WIDTH, IMAGE_HEIGHT);
+
+    SDL_Event e;
+    bool quit = false;
+
     srand(omp_get_wtime());
     Vector white = (Vector){1.0,1.0,1.0};
     Vector color_1 = (Vector){0.6,0.1,0.4};
@@ -66,9 +85,6 @@ int main(void) {
     all_colors[2] = color_1;
     all_spheres[1] = (Sphere){.position = {.x=-7, .y=-5, .z=-65}, .radius=1.0};
     all_spheres[2] = (Sphere){.position = {.x=7, .y=7, .z=-50}, .radius=1.0};
-    //all_spheres[0] = (Sphere){.position = {.z=-60}, .color = color_1, .radius=1.0};
-    //all_spheres[0] = (Sphere){.position = {.z=-60}, .color = color_1, .radius=1.0};
-
 
 
     for(int i = 3; i < NUM_SPHERES; i++) {
@@ -85,11 +101,18 @@ int main(void) {
     Vector s = {0,0,0};
     float xmax = 5, ymax = 5;
     int num_passes = 0;
-    while(true) {
+    while(quit == false) {
 
-        double start = omp_get_wtime();
 
-        printf("New pass\n");
+        while(SDL_PollEvent(&e)) {
+            if(e.type == SDL_QUIT) {
+                quit = true;
+            }
+        }
+        //double start = omp_get_wtime();
+
+        //s = vector_plus(s, (Vector){.z=-0.5});
+        //printf("New pass\n");
         #pragma omp parallel for collapse(2) schedule(dynamic, 16)
         for(int screenY = 0; screenY < IMAGE_HEIGHT; screenY++) {
             for(int screenX = 0; screenX < IMAGE_WIDTH; screenX++) {
@@ -110,45 +133,52 @@ int main(void) {
                 end_color = vector_dividef(end_color, (float)numRays);
                 //printf("%f %f %f\n", end_color.x, end_color.y, end_color.z);
 
-                picture[screenX][screenY][0] += end_color.x;
-                picture[screenX][screenY][1] += end_color.y;
-                picture[screenX][screenY][2] += end_color.z;
+                picture[PIXEL_INDEX(screenX, screenY)] +=end_color.x;
+                picture[PIXEL_INDEX(screenX, screenY)+1] +=end_color.y;
+                picture[PIXEL_INDEX(screenX, screenY)+2] +=end_color.z;
+
             }
 
-            //if(screenY %40 == 0) {
-                //printf("%d/%d\n", screenY, IMAGE_HEIGHT);
-            //}
 
         }
-        double end = omp_get_wtime();
-        double time_taken = end-start;
-        printf("Time: %f\n", time_taken);
-        // 33s
+        //double end = omp_get_wtime();
+        //double time_taken = end-start;
+        //printf("Time: %f\n", time_taken);
         num_passes++;
-        int image_index = 0;
-        for(int screenY = 0; screenY < IMAGE_HEIGHT; screenY++) {
-            for(int screenX = 0; screenX < IMAGE_WIDTH; screenX++) {
-                float r = picture[screenX][screenY][0];
-                float g = picture[screenX][screenY][1];
-                float b = picture[screenX][screenY][2];
+        for(int i = 0; i < IMAGE_WIDTH*IMAGE_HEIGHT*3; i+=3) {
+
+                float r = picture[i];
+                float g = picture[i+1];
+                float b = picture[i+2];
                 short end_r = clamp(r* 255/num_passes, 0, 255);
                 short end_g = clamp(g* 255/num_passes, 0, 255);
                 short end_b = clamp(b* 255/num_passes, 0, 255);
-                image_data[image_index] = (unsigned char)end_r;
-                image_data[image_index+1] = (unsigned char)end_g;
-                image_data[image_index+2] = (unsigned char)end_b;
-                image_index+=3;
-            }
+                image_data[i] = (unsigned char)end_r;
+                image_data[i+1] = (unsigned char)end_g;
+                image_data[i+2] = (unsigned char)end_b;
         }
-    
-        printf("Saving image...\n");
-        save_image(image_data, "result.ppm", IMAGE_WIDTH, IMAGE_HEIGHT);
+        
+        void* locked_pixels;
+        int pitch;
+        SDL_LockTexture(texture, NULL, &locked_pixels, &pitch);
+
+        memcpy(locked_pixels, image_data, IMAGE_WIDTH*IMAGE_HEIGHT*3);
+
+        SDL_UnlockTexture(texture);
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, texture, NULL, NULL);
+        SDL_RenderPresent(renderer);
+
     }
+
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+
 
 }
 
 Vector shoot_ray(Sphere *spheres, int num_spheres, Vector start, Vector direction) {
-  int max_bounces = 10; 
+  int max_bounces = 5; 
   Vector env = {1, 1, 1}; 
   Vector resulting_color = {};
   Vector throughput = {1.0, 1.0, 1.0};
