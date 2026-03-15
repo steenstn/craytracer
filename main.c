@@ -23,9 +23,9 @@ typedef struct Sphere {
     float radius;
 } Sphere;
 
-#define IMAGE_WIDTH 1600
-#define IMAGE_HEIGHT 1200
-#define PIXEL_INDEX(x, y) ((x + y * IMAGE_WIDTH) * 3)
+#define IMAGE_WIDTH 1024
+#define IMAGE_HEIGHT 768
+
 // For the file
 unsigned char image_data[IMAGE_WIDTH * IMAGE_HEIGHT * 3];
 
@@ -131,7 +131,6 @@ int main(void) {
         }
         //double start = omp_get_wtime();
 
-        //printf("New pass\n");
         #pragma omp parallel for collapse(2) schedule(dynamic, 16)
         for(int screenY = 0; screenY < IMAGE_HEIGHT; screenY++) {
             for(int screenX = 0; screenX < IMAGE_WIDTH; screenX++) {
@@ -152,9 +151,10 @@ int main(void) {
                 end_color = vector_dividef(end_color, (float)numRays);
                 //printf("%f %f %f\n", end_color.x, end_color.y, end_color.z);
 
-                picture[PIXEL_INDEX(screenX, screenY)] +=end_color.x;
-                picture[PIXEL_INDEX(screenX, screenY)+1] +=end_color.y;
-                picture[PIXEL_INDEX(screenX, screenY)+2] +=end_color.z;
+                int pixelIndex = (screenX + screenY * IMAGE_WIDTH) * 3;
+                picture[pixelIndex] +=end_color.x;
+                picture[pixelIndex+1] +=end_color.y;
+                picture[pixelIndex+2] +=end_color.z;
 
             }
 
@@ -164,6 +164,7 @@ int main(void) {
         //double time_taken = end-start;
         //printf("Time: %f\n", time_taken);
         num_passes++;
+        #pragma omp parallel for
         for(int i = 0; i < IMAGE_WIDTH*IMAGE_HEIGHT*3; i+=3) {
 
                 float r = picture[i];
@@ -197,7 +198,7 @@ int main(void) {
 }
 
 Vector shoot_ray(Sphere *spheres, int num_spheres, Vector start, Vector direction) {
-  int max_bounces = 5; 
+  int max_bounces = 4; 
   Vector env = {1, 1, 1}; 
   Vector resulting_color = {};
   Vector throughput = {1.0, 1.0, 1.0};
