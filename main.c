@@ -27,7 +27,7 @@ float picture[IMAGE_WIDTH*IMAGE_HEIGHT*3];
 
 const int numRays = 1; // Rays per iteration
 
-#define NUM_SPHERES 100
+#define NUM_SPHERES 1000
 Sphere all_spheres[NUM_SPHERES];
 Vector all_colors[NUM_SPHERES];
 
@@ -61,15 +61,15 @@ int main(void) {
     color_1 = vector_dividef(vector_plus(color_1, white), 2);
     color_2 = vector_dividef(vector_plus(color_2, white), 2);
 
-    all_spheres[0] = (Sphere){.position = {.y=-1, .z=-60}, .radius=1.0};
-    all_colors[0] = color_1;
-    all_colors[1] = color_1;
-    all_colors[2] = color_1;
-    all_spheres[1] = (Sphere){.position = {.x=6*make_random()-3, .y=-1, .z=-65}, .radius=1.0};
-    all_spheres[2] = (Sphere){.position = {.x=7, .y=-1, .z=-50}, .radius=1.0};
+    int num_start_spheres = 10;
+
+    for(int i = 0; i < num_start_spheres; i++) {
+        all_spheres[i] = (Sphere){.position = {.x = 100*make_random()-50, .y=-1, .z=-70 + 20*make_random()}, .radius=1.0};
+        all_colors[i] = color_1;
+    }
 
 
-    for(int i = 3; i < NUM_SPHERES-1; i++) {
+    for(int i = num_start_spheres; i < NUM_SPHERES-1; i++) {
         int sphere_to_grow_from_index = floor(make_random()*i);
 
         Vector direction = (Vector){2*make_random()-1, make_random()*-1, 2*make_random()-1};
@@ -80,13 +80,15 @@ int main(void) {
         all_colors[i] = the_color;
     }
 
+    // Big ground sphere
     all_colors[NUM_SPHERES-1] = (Vector){.x = 0.79, .y = 0.79, .z = 0.79};
     all_spheres[NUM_SPHERES-1] = (Sphere){.position = {.y=10000, .z=-60}, .radius=10000};
     
-    Vector s = {0,-1,0};
+    Vector s = {0,-3,20};
+    //Vector target = {1, 0, -40};
     float xmax = 5, ymax = 5;
     int num_passes = 0;
-    int step = 4;
+    int step = 8;
     while(quit == false) {
 
         while(SDL_PollEvent(&e)) {
@@ -139,7 +141,7 @@ int main(void) {
                 float x, y;
                 x = (float)(screenX * 6) / (float)IMAGE_WIDTH - 3.0;
                 y = ((float)(screenY * 6) / (float)IMAGE_HEIGHT - 3.0) * ((float)IMAGE_HEIGHT / (float)IMAGE_WIDTH);
-
+                //Vector dadir = vector_minus(target, s)
                 Vector dir =  {.x = x / xmax, .y = y / ymax, .z = -1};
                 dir = vector_normalize(dir);
 
