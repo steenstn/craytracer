@@ -63,7 +63,7 @@ ObjectHit ray_sphere_intersection(Sphere *spheres, int num_spheres, Vector start
 }
 
 Vector shoot_ray(Sphere *spheres, Vector* colors, int num_spheres, Vector start, Vector direction) {
-  int max_bounces = 4; 
+  int max_bounces = 3; 
   Vector env = {1, 1, 1}; 
   Vector resulting_color = {};
   Vector throughput = {1.0, 1.0, 1.0};
@@ -95,6 +95,8 @@ Vector shoot_ray(Sphere *spheres, Vector* colors, int num_spheres, Vector start,
     float x = cosf(eps1) * eps2;
     float y = sinf(eps1) * eps2;
     float z = sqrtf(1.0f - eps2 * eps2);
+    if(make_random()>0.1 ) {
+
     direction =
         vector_plus(
             vector_plus(
@@ -104,6 +106,11 @@ Vector shoot_ray(Sphere *spheres, Vector* colors, int num_spheres, Vector start,
             vector_multiplyf(hit_normal, z)
         );
 
+    } else {
+
+    direction = vector_minus(direction, vector_multiplyf(hit_normal, 2*vector_dot(hit_normal, direction)));
+    }
+
     direction = vector_normalize(direction);
     start = vector_plus(hit.position, vector_multiplyf(hit_normal, 0.001f));
 
@@ -112,7 +119,7 @@ Vector shoot_ray(Sphere *spheres, Vector* colors, int num_spheres, Vector start,
     Vector emittance = {};//hit.index%10 == 0 ? (Vector){10.0,10.0,10.0} : (Vector){0,0,0};
     resulting_color = vector_plus(resulting_color, vector_multiply(throughput, emittance));
     throughput = vector_multiply(throughput, this_color);
-    if (num_bounces > 2) {  // Let first few bounces always continue
+    if (num_bounces > 1) {  // Let first few bounces always continue
        float p = fmaxf(throughput.x, fmaxf(throughput.y, throughput.z));
        if (make_random() > p) {
            break;  

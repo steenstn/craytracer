@@ -10,6 +10,7 @@
 #include <SDL2/SDL.h>
 #include <omp.h>
 
+#define NUM_SPHERES 1000
 #include "util.c"
 #include "image.c"
 #include "vector.c"
@@ -27,7 +28,6 @@ float picture[IMAGE_WIDTH*IMAGE_HEIGHT*3];
 
 const int numRays = 1; // Rays per iteration
 
-#define NUM_SPHERES 1000
 Sphere all_spheres[NUM_SPHERES];
 Vector all_colors[NUM_SPHERES];
 
@@ -116,9 +116,11 @@ int main(void) {
                         break;
                     case SDLK_q:
                         step = step <=1 ? 1 : step/2;
+                        printf("Step: %d\n", step);
                         break;
                     case SDLK_e:
                         step = step >=16 ? 16 : step*2;
+                        printf("Step: %d\n", step);
                         break;
                     case SDLK_p:
                         save_bmp("result.bmp", image_data, IMAGE_WIDTH, IMAGE_HEIGHT);
