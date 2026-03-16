@@ -15,8 +15,8 @@
 #include "vector.c"
 #include "raytracer.c"
 
-#define IMAGE_WIDTH 1024
-#define IMAGE_HEIGHT 768
+#define IMAGE_WIDTH 1600
+#define IMAGE_HEIGHT 1200
 
 /// https://gabrielgambetta.com/computer-graphics-from-scratch/05-extending-the-raytracer.html
 
@@ -86,6 +86,7 @@ int main(void) {
     Vector s = {0,-1,0};
     float xmax = 5, ymax = 5;
     int num_passes = 0;
+    int step = 4;
     while(quit == false) {
 
         while(SDL_PollEvent(&e)) {
@@ -111,6 +112,12 @@ int main(void) {
                     case SDLK_DOWN:
                         s = vector_plus(s, (Vector){.y=0.5});
                         break;
+                    case SDLK_q:
+                        step = step <=1 ? 1 : step/2;
+                        break;
+                    case SDLK_e:
+                        step = step >=16 ? 16 : step*2;
+                        break;
                     case SDLK_p:
                         save_bmp("result.bmp", image_data, IMAGE_WIDTH, IMAGE_HEIGHT);
                         break;
@@ -126,8 +133,8 @@ int main(void) {
         //double start = omp_get_wtime();
 
         #pragma omp parallel for collapse(2) schedule(dynamic, 16)
-        for(int screenY = 0; screenY < IMAGE_HEIGHT; screenY++) {
-            for(int screenX = 0; screenX < IMAGE_WIDTH; screenX++) {
+        for(int screenY = 0; screenY < IMAGE_HEIGHT; screenY+=step) {
+            for(int screenX = 0; screenX < IMAGE_WIDTH; screenX+=step) {
                 Vector end_color = {};
                 float x, y;
                 x = (float)(screenX * 6) / (float)IMAGE_WIDTH - 3.0;
@@ -144,11 +151,15 @@ int main(void) {
                 }
                 end_color = vector_dividef(end_color, (float)numRays);
                 //printf("%f %f %f\n", end_color.x, end_color.y, end_color.z);
-
-                int pixelIndex = (screenX + screenY * IMAGE_WIDTH) * 3;
-                picture[pixelIndex] +=end_color.x;
-                picture[pixelIndex+1] +=end_color.y;
-                picture[pixelIndex+2] +=end_color.z;
+                
+                for(int xx = 0; xx < step; xx++) {
+                    for(int yy = 0; yy < step; yy++) {
+                        int pixelIndex = (screenX+xx + (screenY+yy) * IMAGE_WIDTH) * 3;
+                        picture[pixelIndex] +=end_color.x;
+                        picture[pixelIndex+1] +=end_color.y;
+                        picture[pixelIndex+2] +=end_color.z;
+                    }
+                }
 
             }
 

@@ -109,7 +109,7 @@ Vector shoot_ray(Sphere *spheres, Vector* colors, int num_spheres, Vector start,
 
     Vector this_color = colors[hit.index];
 
-    Vector emittance = {};//hit.index == 1 ? (Vector){10.0,10.0,10.0} : (Vector){0,0,0};
+    Vector emittance = {};//hit.index%10 == 0 ? (Vector){10.0,10.0,10.0} : (Vector){0,0,0};
     resulting_color = vector_plus(resulting_color, vector_multiply(throughput, emittance));
     throughput = vector_multiply(throughput, this_color);
     if (num_bounces > 2) {  // Let first few bounces always continue
