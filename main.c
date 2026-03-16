@@ -86,7 +86,6 @@ int main(void) {
     Vector s = {0,-1,0};
     float xmax = 5, ymax = 5;
     int num_passes = 0;
-    bool should_save_image = false;
     while(quit == false) {
 
         while(SDL_PollEvent(&e)) {
@@ -113,7 +112,7 @@ int main(void) {
                         s = vector_plus(s, (Vector){.y=0.5});
                         break;
                     case SDLK_p:
-                        should_save_image = true;
+                        save_bmp("result.bmp", image_data, IMAGE_WIDTH, IMAGE_HEIGHT);
                         break;
                         
 
@@ -184,10 +183,6 @@ int main(void) {
         SDL_RenderCopy(renderer, texture, NULL, NULL);
         SDL_RenderPresent(renderer);
 
-        if(should_save_image) {
-            save_bmp("result.bmp", image_data, IMAGE_WIDTH, IMAGE_HEIGHT);
-            should_save_image = false;
-        }
 
     }
 
