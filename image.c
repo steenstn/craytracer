@@ -22,7 +22,7 @@ bool save_image(unsigned char* image, char* path, int width, int height) {
     return true;
 }
 
-/*void savebmp(const char *filename, int w, int h) {
+void save_bmp(const char *filename, const unsigned char *image_data, int w, int h) {
 
   int i;
   FILE *f;
@@ -53,7 +53,7 @@ bool save_image(unsigned char* image, char* path, int width, int height) {
   // fclose(f);
 
   // Make the int-array into a char-array for the bmp
-  int counter = 0;
+  /*int counter = 0;
   for (int i = 0; i < h; i++) {
     for (int j = 0; j < w; j++) {
       img[counter] = (unsigned char)picture[j][i][2];
@@ -61,6 +61,13 @@ bool save_image(unsigned char* image, char* path, int width, int height) {
       img[counter + 2] = (unsigned char)picture[j][i][0];
       counter = counter + 3;
     }
+  }*/
+
+  unsigned char temp[w*h*3];
+  for(int i = 0; i < w*h*3;i+=3) {
+      temp[i]=image_data[i+2];
+      temp[i+1]=image_data[i+1];
+      temp[i+2]=image_data[i];
   }
 
   f = fopen(filename, "wb+");
@@ -68,9 +75,8 @@ bool save_image(unsigned char* image, char* path, int width, int height) {
   fwrite(bmpinfoheader, 1, 40, f);
 
   for (i = 0; i < h; i++) {
-    fwrite(img + (w * (h - i - 1) * 3), 3, w, f);
+    fwrite(temp + (w * (h - i - 1) * 3), 3, w, f);
     fwrite(bmppad, 1, (4 - (w * 3) % 4) % 4, f);
   }
   fclose(f);
 }
-*/

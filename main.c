@@ -18,6 +18,8 @@
 #define IMAGE_WIDTH 1024
 #define IMAGE_HEIGHT 768
 
+/// https://gabrielgambetta.com/computer-graphics-from-scratch/05-extending-the-raytracer.html
+
 // For the file
 unsigned char image_data[IMAGE_WIDTH * IMAGE_HEIGHT * 3];
 
@@ -84,6 +86,7 @@ int main(void) {
     Vector s = {0,-1,0};
     float xmax = 5, ymax = 5;
     int num_passes = 0;
+    bool should_save_image = false;
     while(quit == false) {
 
         while(SDL_PollEvent(&e)) {
@@ -109,6 +112,10 @@ int main(void) {
                     case SDLK_DOWN:
                         s = vector_plus(s, (Vector){.y=0.5});
                         break;
+                    case SDLK_p:
+                        should_save_image = true;
+                        break;
+                        
 
                 }
                     
@@ -176,6 +183,11 @@ int main(void) {
         SDL_RenderClear(renderer);
         SDL_RenderCopy(renderer, texture, NULL, NULL);
         SDL_RenderPresent(renderer);
+
+        if(should_save_image) {
+            save_bmp("result.bmp", image_data, IMAGE_WIDTH, IMAGE_HEIGHT);
+            should_save_image = false;
+        }
 
     }
 
