@@ -11,7 +11,7 @@
 #include <SDL2/SDL.h>
 #include <omp.h>
 
-#define NUM_SPHERES 1000
+#define NUM_SPHERES 5000
 #include "util.c"
 #include "image.c"
 #include "vector.c"
@@ -42,6 +42,9 @@ void print_vector(Vector v) {
 int main(int argc, char* argv[]) {
 
     Scene scene;
+
+    printf("Size of scene: %zu\n", sizeof scene);
+    printf("Sphere: %zu\n", sizeof(Sphere));
     if(SDL_Init(SDL_INIT_VIDEO) < 0) {
         printf("SDL could not initialize: %s\n", SDL_GetError());
         return 1;
@@ -64,7 +67,8 @@ int main(int argc, char* argv[]) {
     if (argc == 2) {
         printf("Loading %s\n", argv[1]);
         FILE *file;
-        file = fopen("scene.bin", "rb");
+        file = fopen("result.bmp", "rb");
+        fseek(file, 50, SEEK_SET);
         size_t res = fread(&scene, sizeof(scene), 1, file);
         printf("Read %zu\n", res);
         fclose(file);
@@ -143,8 +147,9 @@ int main(int argc, char* argv[]) {
                         save_bmp("result.bmp", image_data, IMAGE_WIDTH, IMAGE_HEIGHT);
                     break;
                     case SDLK_b:
-                        file = fopen("data.bin", "wb");
+                        file = fopen("result.bmp", "rb+");
                         if (file) {
+                            fseek(file,50, SEEK_SET);
                             fwrite(&scene, sizeof(scene), 1, file);
                             fclose(file);
                         }
