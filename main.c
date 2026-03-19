@@ -12,9 +12,10 @@
 #include <omp.h>
 #include <time.h>
 
-#define NUM_SPHERES 1000
+#define NUM_SPHERES 3
 #include "util.c"
 #include "image.c"
+#include "encoder.c"
 #include "vector.c"
 #include "raytracer.c"
 
@@ -39,8 +40,6 @@ typedef struct Scene {
 void print_vector(Vector v) {
     printf("x: %f y: %f z: %f\n", v.x, v.y, v.z);
 }
-
-
 
 int main(int argc, char* argv[]) {
 
@@ -70,10 +69,12 @@ int main(int argc, char* argv[]) {
     if (argc == 2) {
         printf("Loading %s\n", argv[1]);
         FILE *file;
-        file = fopen("result.bmp", "rb");
-        fseek(file, 50, SEEK_SET);
-        size_t res = fread(&scene, sizeof(scene), 1, file);
-        printf("Read %zu\n", res);
+        file = fopen(argv[1], "rb");
+        //fseek(file, 50, SEEK_SET);
+        //size_t res = fread(&scene, sizeof(scene), 1, file);
+        //printf("Read %zu\n", res);
+        Scene* the_scene = (Scene*)decode_message(file);
+        scene = *the_scene;
         fclose(file);
     } else {
         Vector white = (Vector){1.0,1.0,1.0};
@@ -82,7 +83,7 @@ int main(int argc, char* argv[]) {
         color_1 = vector_dividef(vector_plus(color_1, white), 2);
         color_2 = vector_dividef(vector_plus(color_2, white), 2);
 
-        int num_start_spheres = 10;
+        int num_start_spheres = 2;
 
         for(int i = 0; i < num_start_spheres; i++) {
             scene.all_spheres[i] = (Sphere){.position = {.x = 100*make_random()-50, .y=-1, .z=-70 + 20*make_random()}, .radius=1.0};
@@ -152,10 +153,12 @@ int main(int argc, char* argv[]) {
                     case SDLK_b:
                         file = fopen("result.bmp", "rb+");
                         if (file) {
-                            fseek(file,50, SEEK_SET);
-                            fwrite(&scene, sizeof(scene), 1, file);
+                            //fseek(file,50, SEEK_SET);
+                            //fwrite(&scene, sizeof(scene), 1, file);
+                            encode_message(&scene, sizeof(scene), file);
                             fclose(file);
                         }
+
                     break;
 
                 }

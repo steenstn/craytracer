@@ -3,4 +3,5 @@
 a.out
 .clangd
 craytracer
+test
 *.bmp
