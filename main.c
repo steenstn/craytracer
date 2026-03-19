@@ -10,8 +10,9 @@
 #include <stdbool.h>
 #include <SDL2/SDL.h>
 #include <omp.h>
+#include <time.h>
 
-#define NUM_SPHERES 5000
+#define NUM_SPHERES 1000
 #include "util.c"
 #include "image.c"
 #include "vector.c"
@@ -39,12 +40,14 @@ void print_vector(Vector v) {
     printf("x: %f y: %f z: %f\n", v.x, v.y, v.z);
 }
 
+
+
 int main(int argc, char* argv[]) {
 
+    state = (XorShiftR128PlusState){.s = {time(NULL), time(NULL)/2}};
     Scene scene;
 
     printf("Size of scene: %zu\n", sizeof scene);
-    printf("Sphere: %zu\n", sizeof(Sphere));
     if(SDL_Init(SDL_INIT_VIDEO) < 0) {
         printf("SDL could not initialize: %s\n", SDL_GetError());
         return 1;
@@ -62,7 +65,7 @@ int main(int argc, char* argv[]) {
     SDL_Event e;
     bool quit = false;
 
-    srand(omp_get_wtime());
+    //srand(omp_get_wtime());
 
     if (argc == 2) {
         printf("Loading %s\n", argv[1]);
@@ -108,7 +111,7 @@ int main(int argc, char* argv[]) {
     //Vector target = {1, 0, -40};
     float xmax = 5, ymax = 5;
     int num_passes = 0;
-    int step = 8;
+    int step = 2;
     FILE *file;
     while(quit == false) {
 
@@ -155,8 +158,6 @@ int main(int argc, char* argv[]) {
                         }
                     break;
 
-                        
-
                 }
                     
                 num_passes=0;
@@ -164,6 +165,7 @@ int main(int argc, char* argv[]) {
                 }
             
         }
+
         double start = omp_get_wtime();
 
         #pragma omp parallel for collapse(2) schedule(dynamic, 16)
