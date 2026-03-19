@@ -26,3 +26,6 @@ lsp:
 		} \
 	}' main.c > .clangd
 	@echo "Generated .clangd"
+
+test:
+	gcc -std=c99 -o test test.c
