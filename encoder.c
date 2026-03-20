@@ -56,7 +56,7 @@ bool encode_message(void* data, size_t data_size, FILE* file) {
     size_t res = fread(header, 14, 1, file);
     printf("%zu", res);
 
-    if (header[0] != 'B' && header[1] != 'M') {
+    if (header[0] != 'B' || header[1] != 'M') {
         printf("File is not a BMP file, aborting\n");
         return false;
     }
