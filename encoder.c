@@ -6,19 +6,11 @@
 
 static void encode(unsigned char charToEncode, FILE* file) {
   
-  //printf("Encoding: %c\n", charToEncode);
   unsigned char block[8];
   if (fread(block, 1, 8, file) != 8) {
     printf("Failed to read block");
   }
 
-  /*
-  printf("Block: \n");
-  for(int i = 0; i < 8; i++) {
-      printf("%d ", block[i]);
-  }
-  printf("\n");
-  */
   fseek(file, -8, SEEK_CUR); 
   
   unsigned char target[8] =
@@ -40,13 +32,6 @@ static void encode(unsigned char charToEncode, FILE* file) {
         block[j]--;
       }
     }
-/*
-  printf("Block after fix: \n");
-  for(int i = 0; i < 8; i++) {
-      printf("%d ", block[i]);
-  }
-  printf("\n");
-  */
 
     fwrite(block, 1, 8, file); 
 }
@@ -62,13 +47,9 @@ bool encode_message(void* data, size_t data_size, FILE* file) {
     }
 
     unsigned char image_start = header[10];
-    printf("Image starts at offset %d\n", image_start);
     fseek(file, image_start, SEEK_SET);
 
-
     printf("Encoding data size: %zu\n", data_size);
-    // Check data size, encode bit shifted size
-    // Read must check size of size_t
     encode((unsigned char)(data_size>>(3*8)), file);
     encode((unsigned char)(data_size>>(2*8)), file);
     encode((unsigned char)(data_size>>8), file);
@@ -110,18 +91,12 @@ void* decode_message(FILE* file) {
     unsigned char imageStart = header[10];
 
     fseek(file, imageStart, SEEK_SET);
-    size_t messageSize = ((size_t)decode(file)<<(3*8)) + ((size_t)decode(file)<<(2*8)) + ((size_t)decode(file)<<(1*8)) + (size_t)decode(file);
-    printf("decoded message size: %zu\n", messageSize);
+    size_t message_size = ((size_t)decode(file)<<(3*8)) + ((size_t)decode(file)<<(2*8)) + ((size_t)decode(file)<<(1*8)) + (size_t)decode(file);
+    printf("decoded message size: %zu\n", message_size);
 
-    //unsigned char result = decode(file);
-
-    //unsigned int messageSize = (int)result;
-
-    void* result_pointer = malloc(messageSize);
-    printf("Encoded message size: %zu\n\n", messageSize);
-    for(int i = 0; i < messageSize; i++) {
+    void* result_pointer = malloc(message_size);
+    for(int i = 0; i < message_size; i++) {
         unsigned char result = decode(file);
-
         ((unsigned char*)result_pointer)[i] = result;
     }
 
