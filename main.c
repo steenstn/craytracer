@@ -21,6 +21,13 @@
 #define IMAGE_WIDTH 1600
 #define IMAGE_HEIGHT 1200
 
+#define MOVE_LEFT 0
+#define MOVE_FORWARD 1
+#define MOVE_RIGHT 2
+#define MOVE_BACKWARDS 3
+#define MOVE_UP 4
+#define MOVE_DOWN 5
+
 /// https://gabrielgambetta.com/computer-graphics-from-scratch/05-extending-the-raytracer.html
 
 // For the file
@@ -64,6 +71,8 @@ int main(int argc, char* argv[]) {
     bool quit = false;
 
     //srand(omp_get_wtime());
+    
+
 
     if (argc == 2) {
         printf("Loading %s\n", argv[1]);
@@ -113,30 +122,54 @@ int main(int argc, char* argv[]) {
     int num_passes = 0;
     int step = 4;
     FILE *file;
+
+    bool key_map[6]= {};
+
     while(quit == false) {
 
         while(SDL_PollEvent(&e)) {
             if(e.type == SDL_QUIT) {
                 quit = true;
+            } else if (e.type == SDL_KEYUP) {
+                switch (e.key.keysym.sym) {
+                    case SDLK_w:
+                        key_map[MOVE_FORWARD] = false;
+                    break;
+                    case SDLK_s:
+                        key_map[MOVE_BACKWARDS] = false;
+                    break;
+                    case SDLK_a:
+                        key_map[MOVE_LEFT] = false;
+                    break;
+                    case SDLK_d:
+                        key_map[MOVE_RIGHT] = false;
+                    break;
+                    case SDLK_UP:
+                        key_map[MOVE_UP] = false;
+                    break;
+                    case SDLK_DOWN:
+                        key_map[MOVE_DOWN] = false;
+                    break;
+                }
             } else if (e.type == SDL_KEYDOWN) {
                 switch (e.key.keysym.sym) {
                     case SDLK_w:
-                        scene.s = vector_plus(scene.s, (Vector){.z=-0.5});
+                        key_map[MOVE_FORWARD] = true;
                     break;
                     case SDLK_s:
-                        scene.s = vector_plus(scene.s, (Vector){.z=0.5});
+                        key_map[MOVE_BACKWARDS] = true;
                     break;
                     case SDLK_a:
-                        scene.s = vector_plus(scene.s, (Vector){.x=-0.5});
+                        key_map[MOVE_LEFT] = true;
                     break;
                     case SDLK_d:
-                        scene.s = vector_plus(scene.s, (Vector){.x=0.5});
+                        key_map[MOVE_RIGHT] = true;
                     break;
                     case SDLK_UP:
-                        scene.s = vector_plus(scene.s, (Vector){.y=-0.5});
+                        key_map[MOVE_UP] = true;
                     break;
                     case SDLK_DOWN:
-                        scene.s = vector_plus(scene.s, (Vector){.y=0.5});
+                        key_map[MOVE_DOWN] = true;
                     break;
                     case SDLK_q:
                         step = step <=1 ? 1 : step/2;
@@ -162,11 +195,38 @@ int main(int argc, char* argv[]) {
 
                 }
                     
-                num_passes=0;
-                memset(picture, 0, sizeof(picture));
                 }
             
         }
+
+
+            for(int i = 0; i < 6; i++) {
+                if(key_map[i]) {
+
+                num_passes=0;
+                memset(picture, 0, sizeof(picture));
+                }
+            }
+            if(key_map[MOVE_FORWARD]) {
+                scene.s = vector_plus(scene.s, (Vector){.z=-0.5});
+            }
+
+            if(key_map[MOVE_BACKWARDS]){
+                scene.s = vector_plus(scene.s, (Vector){.z=0.5});
+            }
+            if(key_map[MOVE_LEFT]){
+                scene.s = vector_plus(scene.s, (Vector){.x=-0.5});
+            }
+            if(key_map[MOVE_RIGHT]){
+                scene.s = vector_plus(scene.s, (Vector){.x=0.5});
+            }
+            if(key_map[MOVE_UP]){
+                scene.s = vector_plus(scene.s, (Vector){.y=-0.5});
+            }
+            if(key_map[MOVE_DOWN]){
+                scene.s = vector_plus(scene.s, (Vector){.y=0.5});
+            }
+
 
         //double start = omp_get_wtime();
 
