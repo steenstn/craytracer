@@ -1,5 +1,6 @@
 
 #include "encoder.c"
+#include <stddef.h>
 #include <stdio.h>
 
 typedef struct DaStruct {
@@ -15,6 +16,8 @@ int main() {
     FILE* file = fopen("result.bmp", "rb+");
     DaStruct yay = {.x = 2.5, .y = 200.23, .z = 1, .a = -5., .b = 33};
 
+
+    printf("Size to encode: %zu\n", sizeof(yay));
     encode_message(&yay, sizeof (yay), file);
     fclose(file);
 

@@ -6,16 +6,19 @@
 
 static void encode(unsigned char charToEncode, FILE* file) {
   
-  printf("Encoding: %c\n", charToEncode);
+  //printf("Encoding: %c\n", charToEncode);
   unsigned char block[8];
-  size_t res = fread(block, 1, 8, file);
+  if (fread(block, 1, 8, file) != 8) {
+    printf("Failed to read block");
+  }
 
+  /*
   printf("Block: \n");
   for(int i = 0; i < 8; i++) {
       printf("%d ", block[i]);
   }
   printf("\n");
-  printf("res size %zu\n", res);
+  */
   fseek(file, -8, SEEK_CUR); 
   
   unsigned char target[8] =
@@ -37,12 +40,13 @@ static void encode(unsigned char charToEncode, FILE* file) {
         block[j]--;
       }
     }
-
+/*
   printf("Block after fix: \n");
   for(int i = 0; i < 8; i++) {
       printf("%d ", block[i]);
   }
   printf("\n");
+  */
 
     fwrite(block, 1, 8, file); 
 }
@@ -61,7 +65,15 @@ bool encode_message(void* data, size_t data_size, FILE* file) {
     printf("Image starts at offset %d\n", image_start);
     fseek(file, image_start, SEEK_SET);
 
+
+    printf("Encoding data size: %zu\n", data_size);
+    // Check data size, encode bit shifted size
+    // Read must check size of size_t
+    encode((unsigned char)(data_size>>(3*8)), file);
+    encode((unsigned char)(data_size>>(2*8)), file);
+    encode((unsigned char)(data_size>>8), file);
     encode((unsigned char)data_size, file);
+
     for(int i = 0; i < data_size; i++) {
         encode(((unsigned char*)data)[i], file);
     }
@@ -69,21 +81,11 @@ bool encode_message(void* data, size_t data_size, FILE* file) {
     return true;
 }
 
-void* decode_message(FILE* file) {
-    unsigned char header[14];
-
-    if (fread(header, 14, 1, file) != 1) {
-        printf("Failed to read header\n");
-        return NULL;
-    }
-    unsigned char imageStart = header[10];
-
-
-    fseek(file, imageStart, SEEK_SET);
+static unsigned char decode(FILE* file) {
     unsigned char block[8];
     if (fread(block, 1, 8, file) != 8) {
         printf("Failed to read block\n");
-        return NULL;
+        return 0;
     }
     unsigned char result =
       (block[0] & 0b1) +
@@ -94,30 +96,34 @@ void* decode_message(FILE* file) {
       ((block[5] & 0b1) << 5) +
       ((block[6] & 0b1) << 6) +
       ((block[7] & 0b1) << 7);
+    return result;
+}
 
-    unsigned int messageSize = (int)result;
+
+void* decode_message(FILE* file) {
+    unsigned char header[14];
+
+    if (fread(header, 14, 1, file) != 1) {
+        printf("Failed to read header\n");
+        return NULL;
+    }
+    unsigned char imageStart = header[10];
+
+    fseek(file, imageStart, SEEK_SET);
+    size_t messageSize = ((size_t)decode(file)<<(3*8)) + ((size_t)decode(file)<<(2*8)) + ((size_t)decode(file)<<(1*8)) + (size_t)decode(file);
+    printf("decoded message size: %zu\n", messageSize);
+
+    //unsigned char result = decode(file);
+
+    //unsigned int messageSize = (int)result;
+
     void* result_pointer = malloc(messageSize);
-    printf("Encoded message size: %d\n\n", messageSize);
+    printf("Encoded message size: %zu\n\n", messageSize);
     for(int i = 0; i < messageSize; i++) {
-        if (fread(block, 1, 8, file) != 8) {
-            free(result_pointer);
-            return NULL;
-        }
-        result =
-          (block[0] & 0b1) +
-          ((block[1] & 0b1) << 1) +
-          ((block[2] & 0b1) << 2) +
-          ((block[3] & 0b1) << 3) +
-          ((block[4] & 0b1) << 4) +
-          ((block[5] & 0b1) << 5) +
-          ((block[6] & 0b1) << 6) +
-          ((block[7] & 0b1) << 7);
+        unsigned char result = decode(file);
 
-        //memcpy(&result_pointer[i], &result, 1);
         ((unsigned char*)result_pointer)[i] = result;
-        //printf("%c", result);
     }
 
-    //printf("\n");
     return result_pointer;
 }

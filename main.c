@@ -6,13 +6,12 @@
 #include <math.h>
 #include <stddef.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <stdbool.h>
 #include <SDL2/SDL.h>
 #include <omp.h>
 #include <time.h>
 
-#define NUM_SPHERES 3
+#define NUM_SPHERES 1000
 #include "util.c"
 #include "image.c"
 #include "encoder.c"
@@ -83,7 +82,7 @@ int main(int argc, char* argv[]) {
         color_1 = vector_dividef(vector_plus(color_1, white), 2);
         color_2 = vector_dividef(vector_plus(color_2, white), 2);
 
-        int num_start_spheres = 2;
+        int num_start_spheres = 10;
 
         for(int i = 0; i < num_start_spheres; i++) {
             scene.all_spheres[i] = (Sphere){.position = {.x = 100*make_random()-50, .y=-1, .z=-70 + 20*make_random()}, .radius=1.0};
@@ -112,7 +111,7 @@ int main(int argc, char* argv[]) {
     //Vector target = {1, 0, -40};
     float xmax = 5, ymax = 5;
     int num_passes = 0;
-    int step = 2;
+    int step = 4;
     FILE *file;
     while(quit == false) {
 
@@ -169,7 +168,7 @@ int main(int argc, char* argv[]) {
             
         }
 
-        double start = omp_get_wtime();
+        //double start = omp_get_wtime();
 
         #pragma omp parallel for collapse(2) schedule(dynamic, 16)
         for(int screenY = 0; screenY < IMAGE_HEIGHT; screenY+=step) {
@@ -204,9 +203,9 @@ int main(int argc, char* argv[]) {
 
 
         }
-        double end = omp_get_wtime();
-        double time_taken = end-start;
-        printf("Time: %f\n", time_taken);
+        //double end = omp_get_wtime();
+        //double time_taken = end-start;
+        //printf("Time: %f\n", time_taken);
         num_passes++;
         #pragma omp parallel for
         for(int i = 0; i < IMAGE_WIDTH*IMAGE_HEIGHT*3; i+=3) {
